@@ -89,11 +89,10 @@ class TawRlgRest(object):
             19: 'Grand Champion'
         }
         self.division_names = {
-            0: 'Unranked',
-            1: 'DivisionI',
-            2: 'DivisionII',
-            3: 'DivisionIII',
-            4: 'DivisionIV'
+            0: 'DivisionI',
+            1: 'DivisionII',
+            2: 'DivisionIII',
+            3: 'DivisionIV'
         }
 
     def get_taw_player_ids(self):
@@ -162,16 +161,18 @@ class TawRlgRest(object):
             time.sleep(0.75)
 
     def update_local_player_stats(self):
-        sheet_headers = ['SteamName', 'SteamID', 'ProfileLink',
+        sheet_headers = ['\"SteamName', 'SteamProfileLink', 'TrackerLink',
                          '1v1 Matches', '1v1 MMR', '1v1 Tier', '1v1 Division',
                          '2v2 Matches', '2v2 MMR', '2v2 Tier', '2v2 Division',
                          'Solo 3v3 Matches', 'Solo 3v3 MMR', 'Solo 3v3 Tier', 'Solo 3v3 Division',
                          'Standard 3v3 Matches', 'Standard 3v3 MMR', 'Standard 3v3 Tier', 'Standard 3v3 Division',
-                         'Wins', 'Goals', 'MVPs', 'Saves', 'Shots', 'Assists']
+                         'Wins', 'Goals', 'MVPs', 'Saves', 'Shots', 'Assists\"']
         data = [sheet_headers]
 
         for k, d in self.player_stats.items():
-            row_data = [d['overall_stats'][0], k, d['overall_stats'][1],
+            row_data = ['\"' + str(d['overall_stats'][0]),
+                        '=HYPERLINK(\"\"http://steamcommunity.com/profiles/{}\"\", \"\"Steam Profile\"\")'.format(k),
+                        '=HYPERLINK(\"\"{}\"\", \"\"Tracker Profile\"\")'.format(d['overall_stats'][1]),
                         d['1v1']['Matches'], d['1v1']['MMR'], self.tier_names[d['1v1']['Tier']],
                         self.division_names[d['1v1']['Division']],
                         d['2v2']['Matches'], d['2v2']['MMR'], self.tier_names[d['2v2']['Tier']],
@@ -181,21 +182,29 @@ class TawRlgRest(object):
                         d['Standard3v3']['Matches'], d['Standard3v3']['MMR'], self.tier_names[d['Standard3v3']['Tier']],
                         self.division_names[d['Standard3v3']['Division']],
                         d['overall_stats'][2], d['overall_stats'][3], d['overall_stats'][4], d['overall_stats'][5],
-                        d['overall_stats'][6], d['overall_stats'][7]]
+                        d['overall_stats'][6], str(d['overall_stats'][7]) + '\"']
+            if row_data[5] == 'Unranked':
+                row_data[6] = 'Unranked'
+            if row_data[9] == 'Unranked':
+                row_data[10] = 'Unranked'
+            if row_data[13] == 'Unranked':
+                row_data[14] = 'Unranked'
+            if row_data[17] == 'Unranked':
+                row_data[18] = 'Unranked'
             data.append(row_data)
         with open('D:\\1TAW\\current_player_stats.csv', 'w') as out:
             for row in data:
                 try:
-                    out.write(','.join([str(x) for x in row]) + '\n')
+                    out.write('\",\"'.join([str(x) for x in row]) + '\n')
                 except UnicodeEncodeError as e:
                     print(row, e)
                     for i, x in enumerate(row):
                         row[i] = remove_non_ascii(str(x))
-                    out.write(','.join(row) + '\n')
+                    out.write('\",\"'.join(row) + '\n')
 
     def update_remote_player_stats(self):
         # Not yet working
-        sheet_headers = ['SteamName', 'SteamID', 'ProfileLink',
+        sheet_headers = ['SteamName', 'SteamProfileLink', 'TrackerLink',
                          '1v1 Matches', '1v1 MMR', '1v1 Tier', '1v1 Division',
                          '2v2 Matches', '2v2 MMR', '2v2 Tier', '2v2 Division',
                          'Solo 3v3 Matches', 'Solo 3v3 MMR', 'Solo 3v3 Tier', 'Solo 3v3 Division',
@@ -205,7 +214,7 @@ class TawRlgRest(object):
         data = [sheet_headers]
 
         for k, d in self.player_stats.items():
-            row_data = [d['overall_stats'][0], k, d['overall_stats'][1],
+            row_data = [d['overall_stats'][0], k, '=HYPERLINK({})'.format(d['overall_stats'][1]),
                         d['1v1']['Matches'], d['1v1']['MMR'], self.tier_names[d['1v1']['Tier']], self.division_names[d['1v1']['Division']],
                         d['2v2']['Matches'], d['2v2']['MMR'], self.tier_names[d['2v2']['Tier']], self.division_names[d['2v2']['Division']],
                         d['Solo3v3']['Matches'], d['Solo3v3']['MMR'], self.tier_names[d['Solo3v3']['Tier']], self.division_names[d['Solo3v3']['Division']],
